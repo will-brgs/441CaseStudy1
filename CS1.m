@@ -10,12 +10,12 @@ clc
 code = "finished";
 %%
 v = 0.05; % V1, infection rate (between 0 and 1)
-k = [1,2].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+k = [5,2].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
 r = 2; % recovery rate
 
 x = [1e6,1]; % Initial: susceptible, infected individuals
 a = 0.01; % Rate of reinfection/loss of immunity (hundreds place)
-u = [0,0]; % Control inputs
+u = [0,3e3]; % Control inputs
 
 xdot = [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1);
     ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2)];
@@ -34,15 +34,21 @@ system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))-a*x(2) + u(1);
 [t, x1] = ode45(system, t, IC1);
 
 fh1 = figure(1);
-plot(t, x1(:,1).', 'linewidth', 1.5);
+plot(t, x1(:,1), 'linewidth', 1.5);
 hold on;
 plot(t, x1(:,2), 'linewidth', 1.5);
-title({'Zero-Input Simulation #1',sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)});
+title({'Zero-Input Simulation #1 (Time Based)',sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)});
 xlabel('Time (weeks)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
 
+fh2 = figure(2);
+plot(x1(:,1), x1(:,2), 'linewidth', 1.5);
+title({'Zero-Input Simulation #1 (Trace)',sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)});
+xlabel('X_{1}');
+ylabel('X_{2}');
+grid on
 %% Save images
 % filepath = "C:\Users\Will\OneDrive - Washington University in St. Louis\. Control Systems\Case Study 1\Figure export";
 % exportgraphics(fh1, fullfile(filepath, 'V Distribution.jpg'), 'resolution', 300);
