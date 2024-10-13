@@ -10,10 +10,10 @@ clc
 code = "finished";
 
 %% Part 1: Model Sim using ODE45
-v = 1; % V1, infection rate (between 0 and 1)
-k = [1000,200].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
-r = 0.4; % recovery rate
-a = 0.6; % Rate of reinfection/loss of immunity (hundreds place)
+v = 0.5; % V1, infection rate (between 0 and 1)
+k = [1,1].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+r = 1; % recovery rate
+a = 0.01; % Rate of reinfection/loss of immunity (hundreds place)
 u = [0,0]; % Control inputs
 
 
@@ -41,7 +41,6 @@ xlabel('Time (weeks)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
-
 % fh2 = figure(2);
 % plot(x1(:,1), x1(:,2), 'linewidth', 1.5);
 % title({'Zero-Input Simulation #1 (Trace)',sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)});
@@ -111,6 +110,10 @@ xlabel('Time (weeks)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
+
+%% Part 3: Simulate for Networked Model
+
+
 % -------------------------------------------------------------------
 %% Auxilliary Code : Meant Saving Information and Storing Old Code
 % -------------------------------------------------------------------
@@ -147,5 +150,5 @@ end
 %     ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2)];
 
 % xpplane = [-1*((v * x * y)/(k+y))+ a * y;
-%     ((v * x * y)/(k + y)) - (r * y)/(y + l) - a*y];
+%     ((v * x * y)/(k + y) - (r * y)/(y + l) - a*y];
 %y = x2. k = k1, l = k2
