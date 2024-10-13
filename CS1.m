@@ -85,7 +85,6 @@ r = 0.9; % recovery rate
 a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 u = [1,-1]; % Control inputs
 
-
 IC1 = [1e6 - 10,10]; %Initial susceptible, Initial infected 
 t = 0:1:150;
 
@@ -112,7 +111,33 @@ legend('Susceptible','Infected');
 grid on
 
 %% Part 3: Simulate for Networked Model
+v = 0.1; % V1, infection rate (between 0 and 1)
+k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+r = 0.9; % recovery rate
+a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 
+N = 4; % Number of regions
+u = [0 0;
+     0 0;
+     0 0;
+     0 0;]; % Control inputs, each row is a region
+
+tspan = 0:1:150;
+
+IC1 = [1e6 10;
+       1e6 0;
+       1e4 0;
+       1e3 0]; % ICs for each region, First col susceptible, second infected
+
+[t, x] = ode45(@(t, x) [
+    % Region 1 equations
+    (v * x(1) * x(2)) / (k(1) + x(2)) + alpha * x(2) + u1_1(t);
+    (v * x(1) * x(2)) / (k(1) + x(2)) - (r * x(2)) / (x(2) + K2) - alpha * x(2) + u2_1(t);
+    
+    % Region 2 equations
+    (V1 * x(3) * x(4)) / (K1 + x(4)) + alpha * x(4) + u1_2(t);  % dx1_2/dt
+    (V1 * x(3) * x(4)) / (K1 + x(4)) - (r * x(4)) / (x(4) + K2) - alpha * x(4) + u2_2(t);  % dx2_2/dt
+], tspan, x0);
 
 % -------------------------------------------------------------------
 %% Auxilliary Code : Meant Saving Information and Storing Old Code
@@ -123,19 +148,6 @@ grid on
 % exportgraphics(fh2, fullfile(filepath, 'E Magnitude.jpg'), 'resolution', 300);
 % exportgraphics(fh3, fullfile(filepath, 'E Field.jpg'), 'resolution', 300);
 
-%% Functions 
-
-% Event function to stop when x1 (susceptible population) reaches 0
-function [value, isterminal, direction] = events_function(t, x)
-    x1 = x(1); % Susceptible individuals
-
-    % Stop the solver when x1 = 0
-    value = x1;         % Detect when x1 = 0
-    isterminal = 0;     % Stop the integration
-    direction = -1;     % Only trigger when x1 is decreasing
-end
-
-% -------------------------------------------------------------------
 %% Archive: Old Code That Might be Useful
 % -------------------------------------------------------------------
 % v = 0.05; % V1, infection rate (between 0 and 1)
