@@ -129,16 +129,20 @@ IC1 = [1e6 10;
        1e4 0;
        1e3 0]; % ICs for each region, First col susceptible, second infected
 
-[t, x] = ode45(@(t, x) [
-    % Region 1 equations
-    (v * x(1) * x(2)) / (k(1) + x(2)) + alpha * x(2) + u1_1(t);
-    (v * x(1) * x(2)) / (k(1) + x(2)) - (r * x(2)) / (x(2) + K2) - alpha * x(2) + u2_1(t);
-    
-    % Region 2 equations
-    (V1 * x(3) * x(4)) / (K1 + x(4)) + alpha * x(4) + u1_2(t);  % dx1_2/dt
-    (V1 * x(3) * x(4)) / (K1 + x(4)) - (r * x(4)) / (x(4) + K2) - alpha * x(4) + u2_2(t);  % dx2_2/dt
-], tspan, x0);
+[t, x] = ode45(@(t, x) networkedModel(t, x, N, v, k, r, a, u), tspan, IC1);
 
+figure;
+for i = 1:N
+    subplot(N/2, 2, 2*i-i);
+    plot(t, x(:, 2*i-1), 'linewidth', 1.5);
+    hold on
+    plot(t, x(:, 2*i), 'linewidth', 1.5)
+    title({sprintf('Region #%.1f', i), ...
+           sprintf('u =[%.f,%.f]', u(i,1),u(i,2))});
+    grid on
+end
+sgtitle({'Networked Model Simulation #1', ...
+    sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)})
 % -------------------------------------------------------------------
 %% Auxilliary Code : Meant Saving Information and Storing Old Code
 % -------------------------------------------------------------------
