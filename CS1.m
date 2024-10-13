@@ -34,7 +34,9 @@ plot(t, x1(:,1), 'linewidth', 1.5);
 hold on;
 plot(t, x1(:,2), 'linewidth', 1.5);
 %plot(t, immune, 'linewidth', 1.5);
-title({'Zero-Input Simulation #1 (Time Based)',sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)});
+title({'Zero-Input Simulation #1 (Time Based)', ...
+    sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
+    sprintf('u = [%.1f, %.1f]', u(1), u(2))})
 xlabel('Time (weeks)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
@@ -69,7 +71,9 @@ plot(t, x(:,1), 'linewidth', 1.5);
 hold on;
 plot(t, x(:,2), 'linewidth', 1.5);
 %plot(t, immune, 'linewidth', 1.5);
-title({'Linearized Simulation #1 (Time Based)',sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)});
+title({'Linearized Simulation #1 (Time Based)', ...
+    sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
+    sprintf('u = [%.1f, %.1f]', u(1), u(2))})
 xlabel('Time (weeks)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
