@@ -10,15 +10,15 @@ clc
 code = "finished";
 
 %% Part 1: Model Sim using ODE45
-v = 0.5; % V1, infection rate (between 0 and 1)
-k = [1,1].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
-r = 1; % recovery rate
-a = 0.01; % Rate of reinfection/loss of immunity (hundreds place)
+v = 0.1; % V1, infection rate (between 0 and 1)
+k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+r = 0.9; % recovery rate
+a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 u = [0,0]; % Control inputs
 
 
 IC1 = [1e6 - 10,10]; %Initial susceptible, Initial infected 
-t = 0:1:90;
+t = 0:1:150;
 
 system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1); 
     ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2)];
@@ -37,7 +37,7 @@ plot(t, x1(:,2), 'linewidth', 1.5);
 title({'Zero-Input Simulation #1 (Time Based)', ...
     sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
     sprintf('u = [%.1f, %.1f]', u(1), u(2))})
-xlabel('Time (weeks)');
+xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
@@ -49,16 +49,18 @@ grid on
 % grid on
 
 %% Part 1: Simulate System with Linearized Model
-k = [10, 10];
-v = 1;
-a = 0.2;
-r = 0.1;
-t = 0:1:1000;
+v = 0.1; % V1, infection rate (between 0 and 1)
+k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+r = 0.9; % recovery rate
+a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
+t = 0:1:150;
 
-xeq =  [(r/k(2) + a)*(k(1)/v) + 1,0]; 
+IC1 = [1e6 - 10,10]; %Initial susceptible, Initial infected 
+
+xeq =  [(r/k(2) + a)*(k(1)/v) + 0.1,0]; 
 
 J = [0, (-1 * v * xeq(1))/k(1); 
-    0 , (v * xeq(1))/k(1) - r/k(2) - a];
+     0 , (v * xeq(1))/k(1) - r/k(2) - a];
 
 system = @(t, x) J * x;
 
@@ -73,7 +75,7 @@ plot(t, x(:,2), 'linewidth', 1.5);
 title({'Linearized Simulation #1 (Time Based)', ...
     sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
     sprintf('u = [%.1f, %.1f]', u(1), u(2))})
-xlabel('Time (weeks)');
+xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
@@ -83,13 +85,29 @@ v = 0.1; % V1, infection rate (between 0 and 1)
 k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
 r = 0.9; % recovery rate
 a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
-u = [1,-1]; % Control inputs
 
 IC1 = [1e6 - 10,10]; %Initial susceptible, Initial infected 
 t = 0:1:150;
 
-system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1); 
-    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2)];
+ivMax = 1000;
+ivPeriod = 50; %days the intervention will last
+ivStartTime = 150; % day you want to start control input
+
+% Initialize control input (wave)
+wave = zeros(size(t));
+
+% Generate sine wave with given amplitude and period
+sine = ivMax * sin(2 * pi * (1 / ivPeriod) * (0:(ivPeriod-1)));
+
+% Insert sine wave at specified start time
+wave(ivStartTime:(ivStartTime + length(sine) - 1)) = sine;
+
+% Control inputs (intervention in susceptible and infected populations)
+u = @(t) [interp1(t, wave, t, 'linear', 0); 0]; % Only applying control on susceptible population
+
+
+system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(t); 
+    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2,t)];
 
 %options = odeset('Events', @events_function, 'NonNegative', [1, 2]);
 
@@ -105,16 +123,16 @@ plot(t, x1(:,2), 'linewidth', 1.5);
 title({'Control Input Simulation #1 (Time Based)', ...
     sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
     sprintf('u = [%.1f, %.1f]', u(1), u(2))})
-xlabel('Time (weeks)');
+xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
 
 %% Part 3: Simulate Networked Model
 v = 0.1; % V1, infection rate (between 0 and 1)
-k = [100,200].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
-r = 0.2; % recovery rate
-a = 0.2; % Rate of reinfection/loss of immunity (hundreds place)
+k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+r = 0.9; % recovery rate
+a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 
 N = 4; % Number of regions
 tspan = 0:1:150;
