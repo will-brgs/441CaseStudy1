@@ -89,25 +89,24 @@ a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 IC1 = [1e6 - 10,10]; %Initial susceptible, Initial infected 
 t = 0:1:150;
 
-ivMax = 1000;
-ivPeriod = 50; %days the intervention will last
-ivStartTime = 150; % day you want to start control input
+ivMax = 10000;
+ivPeriod = 70; %days the intervention will last
+ivStartTime = 20; % day you want to start control input
 
 % Initialize control input (wave)
-wave = zeros(size(t));
+wave = zeros(length(t),1);
 
 % Generate sine wave with given amplitude and period
-sine = ivMax * sin(2 * pi * (1 / ivPeriod) * (0:(ivPeriod-1)));
+sine = ivMax * sin(pi * (1/ivPeriod) * (0:(ivPeriod))); %pi instead of 2pi to get 1 half period
 
 % Insert sine wave at specified start time
-wave(ivStartTime:(ivStartTime + length(sine) - 1)) = sine;
+wave(ivStartTime:(ivStartTime + length(sine)-1),1) = sine;
 
-% Control inputs (intervention in susceptible and infected populations)
-u = @(t) [interp1(t, wave, t, 'linear', 0); 0]; % Only applying control on susceptible population
+% Control inputs
+u = cat(2,wave(:), zeros(length(t),1));
 
-
-system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(t); 
-    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2,t)];
+system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(round(t+1),1); 
+    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(round(t+1),2)];
 
 %options = odeset('Events', @events_function, 'NonNegative', [1, 2]);
 
