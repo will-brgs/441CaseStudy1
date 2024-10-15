@@ -57,9 +57,9 @@ t = 0:1:150;
 
 IC1 = [1e6 - 10,10]; %Initial susceptible, Initial infected 
 
-xeq =  [(r/k(2) + a)*(k(1)/v) + 0.1,0]; 
+xeq =  [(r/k(2) + a)*(k(1)/v) + 0.15,0]; 
 
-J = [0, (-1 * v * xeq(1))/k(1); 
+J = [0, (-1 * v * xeq(1))/k(1) + a; 
      0 , (v * xeq(1))/k(1) - r/k(2) - a];
 
 system = @(t, x) J * x;
@@ -125,6 +125,72 @@ title({'Control Input Simulation #1 (Time Based)', ...
 xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
+grid on
+
+
+%% Part 2: Design Original Control Inputs (Operation Cannibal Zombies)
+v = 0.1; % V1, infection rate (between 0 and 1)
+k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+r = 0.9; % recovery rate
+a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
+beta = 0.15;
+
+IC1 = [1e6 - 10,10]; %Initial susceptible, Initial infected 
+t = 0:1:150;
+
+ivMax = 10000;
+ivPeriod = 70; %days the intervention will last
+ivStartTime = 20; % day you want to start control input
+
+% Initialize control input (wave)
+wave = zeros(length(t),1);
+
+% Generate sine wave with given amplitude and period
+sine = ivMax * sin(pi * (1/ivPeriod) * (0:(ivPeriod))); %pi instead of 2pi to get 1 half period
+
+% Insert sine wave at specified start time
+wave(ivStartTime:(ivStartTime + length(sine)-1),1) = sine;
+
+%These control inputs can control at what population an endemic state is
+%reached by changing beta
+system_endemic = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a*x(2) + beta*x(2); 
+    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) - beta*x(2)];
+
+%Modeling cannibal zombies will drive disease to eradication
+system_zombies = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a*x(2); 
+    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) - beta*x(2)];
+
+
+[t_zombies, x1_zombies] = ode45(system_zombies, t, IC1);
+[t_endemic, x1_endemic] = ode45(system_endemic, t, IC1);
+
+
+
+figure
+subplot(2, 1, 1)
+hold on;
+plot(t_zombies, x1_zombies(:,1), 'linewidth', 1.5);
+plot(t_zombies, x1_zombies(:,2), 'linewidth', 1.5);
+xlabel('Time (days)');
+ylabel('# of Individuals');
+legend('Susceptible','Infected');
+title('Cannibal Zombies')
+hold off;
+grid on
+
+
+subplot(2, 1, 2)
+hold on;
+plot(t_endemic, x1_endemic(:,1), 'linewidth', 1.5);
+plot(t_endemic, x1_endemic(:,2), 'linewidth', 1.5);
+xlabel('Time (days)');
+ylabel('# of Individuals');
+legend('Susceptible','Infected');
+title('Endemic Control')
+
+sgtitle({'Control Input Simulation #1 (Time Based)', ...
+    sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
+    sprintf('u = [%.1f, %.1f]', u(1), u(2))})
 grid on
 
 %% Part 3: Simulate Networked Model
