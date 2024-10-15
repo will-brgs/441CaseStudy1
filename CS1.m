@@ -2,51 +2,61 @@
 %% Introduction
 % * Authors:                  Will Burgess, Mack LaRosa
 % * Class:                    ESE 441
-% * Date:                     Created 10/10/2024, Last Edited 10/18/2024
+% * Date:                     Created 10/10/2024, Last Edited 10/17/2024
 %% Housekeeping
 close all
 clear
 clc
 code = "finished";
-
 %% Part 1: Model Sim using ODE45
-v = 0.1; % V1, infection rate (between 0 and 1)
-k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
-r = 0.9; % recovery rate
-a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
+figure;
+for i =1:4
+    if i == 1
+    v = 0.1; % V1, infection rate (between 0 and 1)
+    k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+    r = 0.9; % recovery rate
+    a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
+    elseif i == 2
+    v = 0.2;
+    k = [10000, 2000];
+    r = 0.01;
+    a = 0.12;
+    elseif i == 3
+    v = 0.2;
+    k = [10000, 2000];
+    r = 0.9;
+    a = 0.03;
+    elseif i == 4
+    v = 0.2;
+    k = [20000, 100];
+    r = 0.9;
+    a = 0.1;
+    end
+
 u = [0,0]; % Control inputs
-
-
 IC1 = [1e6 - 10,10]; %Initial susceptible, Initial infected 
 t = 0:1:150;
 
 system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1); 
     ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2)];
 
-%options = odeset('Events', @events_function, 'NonNegative', [1, 2]);
-
 [t, x1] = ode45(system, t, IC1);
-%immune = ((IC1(1) + IC1(2)) * ones(length(x1),1)) - (x1(:,1) + x1(:,2));
 
 %fh1 = figure(1)
-figure;
+
+subplot(2,2,i)
 plot(t, x1(:,1), 'linewidth', 1.5);
 hold on;
 plot(t, x1(:,2), 'linewidth', 1.5);
 %plot(t, immune, 'linewidth', 1.5);
-title({'Zero-Input Simulation #1 (Time Based)', ...
-    sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
+title({sprintf('Zero-Input Simulation #%.1d',i), ...
+    sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
     sprintf('u = [%.1f, %.1f]', u(1), u(2))})
 xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
-% fh2 = figure(2);
-% plot(x1(:,1), x1(:,2), 'linewidth', 1.5);
-% title({'Zero-Input Simulation #1 (Trace)',sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)});
-% xlabel('X_{1}');
-% ylabel('X_{2}');
-% grid on
+end
 
 %% Part 1: Simulate System with Linearized Model
 v = 0.1; % V1, infection rate (between 0 and 1)
@@ -89,7 +99,7 @@ a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 IC1 = [1e6 - 10,10]; %Initial susceptible, Initial infected 
 t = 0:1:150;
 
-ivMax = 10000;
+ivMax = -10000;
 ivPeriod = 70; %days the intervention will last
 ivStartTime = 20; % day you want to start control input
 
@@ -105,13 +115,22 @@ wave(ivStartTime:(ivStartTime + length(sine)-1),1) = sine;
 % Control inputs
 u = cat(2,wave(:), zeros(length(t),1));
 
+% Plot control input
+figure
+plot(t,u(:,1), 'linewidth', 2.5)
+hold on
+plot(t,u(:,2), 'linewidth', 1.5)
+ylim([ivMax - 1000, 1000])
+title('Control Inputs (Delayed Sine Wave)')
+ylabel('Amplitude (# of Individuals)')
+xlabel('Time (days)')
+legend('u_{1}(t)','u_{2}(t)', Location='southeast');
+grid on
+
 system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(round(t+1),1); 
     ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(round(t+1),2)];
 
-%options = odeset('Events', @events_function, 'NonNegative', [1, 2]);
-
 [t, x1] = ode45(system, t, IC1);
-%immune = ((IC1(1) + IC1(2)) * ones(length(x1),1)) - (x1(:,1) + x1(:,2));
 
 % fh1 = figure(1);
 figure
@@ -119,15 +138,13 @@ plot(t, x1(:,1), 'linewidth', 1.5);
 hold on;
 plot(t, x1(:,2), 'linewidth', 1.5);
 %plot(t, immune, 'linewidth', 1.5);
-title({'Control Input Simulation #1 (Time Based)', ...
+title({'Control Input Simulation (Delayed Sine Wave)', ...
     sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
-    sprintf('u = [%.1f, %.1f]', u(1), u(2))})
+   'u = [wave, 0]'})
 xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
-
-
 %% Part 2: Design Original Control Inputs (Operation Cannibal Zombies)
 v = 0.1; % V1, infection rate (between 0 and 1)
 k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
@@ -160,11 +177,8 @@ system_endemic = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a*x(2) + beta*x(2)
 system_zombies = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a*x(2); 
     ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) - beta*x(2)];
 
-
 [t_zombies, x1_zombies] = ode45(system_zombies, t, IC1);
 [t_endemic, x1_endemic] = ode45(system_endemic, t, IC1);
-
-
 
 figure
 subplot(2, 1, 1)
@@ -174,10 +188,9 @@ plot(t_zombies, x1_zombies(:,2), 'linewidth', 1.5);
 xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
-title('Cannibal Zombies')
+title(sprintf('Cannibal Zombies: u = [%.1f * x_{2}(t), - %.1f * x_{2}(t)]', beta, beta))
 hold off;
 grid on
-
 
 subplot(2, 1, 2)
 hold on;
@@ -186,11 +199,12 @@ plot(t_endemic, x1_endemic(:,2), 'linewidth', 1.5);
 xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
-title('Endemic Control')
+title(sprintf('Endemic Control: u = [%.1d, -%.1f * x_{2}(t)]', 0, beta))
 
-sgtitle({'Control Input Simulation #1 (Time Based)', ...
+sgtitle({'Control Input Simulation (Cannibal Zombies)', ...
     sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
-    sprintf('u = [%.1f, %.1f]', u(1), u(2))})
+    %sprintf('u = [%.1f, %.1f]', u(1), u(2)), ...
+    },'FontSize', 12, 'FontWeight', 'bold')
 grid on
 
 %% Part 3: Simulate Networked Model
@@ -260,3 +274,10 @@ sgtitle({'Networked Model Simulation #1', ...
 % xpplane = [-1*((v * x * y)/(k+y))+ a * y;
 %     ((v * x * y)/(k + y) - (r * y)/(y + l) - a*y];
 %y = x2. k = k1, l = k2
+
+% fh2 = figure(2);
+% plot(x1(:,1), x1(:,2), 'linewidth', 1.5);
+% title({'Zero-Input Simulation #1 (Trace)',sprintf('V_{1} =%.1f, K_{1} =%.1f, K_{2} =%.1f, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)});
+% xlabel('X_{1}');
+% ylabel('X_{2}');
+% grid on
