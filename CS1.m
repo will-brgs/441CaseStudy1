@@ -216,18 +216,23 @@ a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 N = 4; % Number of regions
 tspan = 0:1:150;
 
-C = ones(N,length(tspan)); % Controls summation for x1 , rows regions, cols timestep
+% all C and D controls must be >0
+% Controls summation for x1 , rows regions, cols timestep
+C = cat(1, 3 * ones(1,length(tspan)), 10 * ones(1,length(tspan)),...
+           100 * ones(1,length(tspan)), 1 * ones(1,length(tspan))); 
 
-D = ones(N,length(tspan)); % Controls summation for x2 , rows regions, cols timestep
+% Controls summation for x2 , rows regions, cols timestep
+D = cat(1, 3 * ones(1,length(tspan)), 10 * ones(1,length(tspan)),...
+           100 * ones(1,length(tspan)), 1 * ones(1,length(tspan))); 
 
-u = [0 0;
-     0 0;
-     0 0;
-     0 0;]; % Control inputs, each row is a region
+u = [-1000 0;
+     0    0;
+     1000 0;
+     0    0;]; % Control inputs, each row is a region
 
-IC1 = [1e6 10;
+IC1 = [1e6 0;
        1e6 0;
-       1e6 10;
+       1e6 0;
        1e6 0]; % ICs for each region, First col susceptible, second infected
 
 IC1 = IC1(:); % Convert to a vector for compatability with ODE45
