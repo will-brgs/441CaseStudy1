@@ -40,14 +40,14 @@ t = 0:1:150;
 system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1); 
     ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2)];
 
-[t, x1] = ode45(system, t, IC);
+[t, x] = ode45(system, t, IC);
 
 %fh1 = figure(1)
 
 subplot(2,2,i)
-plot(t, x1(:,1), 'linewidth', 1.5);
+plot(t, x(:,1), 'linewidth', 1.5);
 hold on;
-plot(t, x1(:,2), 'linewidth', 1.5);
+plot(t, x(:,2), 'linewidth', 1.5);
 %plot(t, immune, 'linewidth', 1.5);
 title({sprintf('Zero-Input Simulation #%.1d',i), ...
     sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
@@ -58,6 +58,27 @@ legend('Susceptible','Infected');
 grid on
 end
 
+% zoom in on oscilations at endemic state
+x = x(75:151,:);
+t = t(75:151);
+figure
+subplot(2,1,1)
+plot(t, x(:,1), 'linewidth', 1.5);
+xlabel('Time (days)');
+ylabel('# of Individuals');
+title('Susceptible Individuals')
+grid on
+
+colors = get(gca, 'ColorOrder');
+orange = colors(2, :);
+
+subplot(2,1,2)
+plot(t, x(:,2), 'linewidth', 1.5, 'Color', orange);
+xlabel('Time (days)');
+ylabel('# of Individuals');
+title('Infected Individuals')
+sgtitle({'Zero-input Simulation #4 at Endemic State'},'FontSize', 12, 'FontWeight', 'bold')
+grid on
 %% Part 1: Simulate System with Linearized Model
 figure;
 for i =1:4
@@ -238,15 +259,15 @@ tspan = 0:1:150;
 
 % all C and D controls must be >0
 
-C = [1 8 2 2;
+C = [0 8 2 2;
      4 0 8 5;
      2 2 0 3;
      1 6 2 0;];
 
-D = [0 2 0 4;
-     3 0 2 0;
-     0 2 0 0;
-     0 3 0 0;];
+D = [0 2 1 4;
+     3 0 2 4;
+     4 2 0 6;
+     1 3 2 0;];
 
 u = [0 0;
      0 0;
@@ -254,22 +275,49 @@ u = [0 0;
      0 0;]; % Control inputs, each row is a region
 
 IC = [1e6 1;
-       1e6 3;
-       1e6 5;
-       1e6 1]; % ICs for each region, First col susceptible, second infected
+      1e6 3;
+      1e6 5;
+      1e6 1]; % ICs for each region (rows), First col susceptible, second infected
 
 IC = IC(:); % Convert to a vector for compatability with ODE45
 
-systemR1 = @(t, x1, x2, x3, x4) [-1*((v * x1(1) * x1(2))/(k(1)+x1(2)))+ a * x1(2) + u(1,1) ...
-    - ((C(1,2) * x1(1) - x2(1)) + (C(1,3) * x1(1) - x3(1)) + (C(1,4) * x1(1) - x4(1))); 
-    ((v * x1(1) * x1(2))/(k(1) + x1(2))) - (r * x1(2))/(x1(2) + k(2)) - a * x1(2) + u(1,2)] ...
-    - ((D(1,2) * x1(1) - x2(1)) + (D(1,3) * x1(1) - x3(1)) + (D(1,4) * x1(1) - x4(1))); 
+% systemR1 = @(t, x1, x2, x3, x4) [-1*((v * x1(1) * x1(2))/(k(1)+x1(2)))+ a * x1(2) + u(1,1) ...
+%     - ((C(1,2) * x1(1) - x2(1)) + (C(1,3) * x1(1) - x3(1)) + (C(1,4) * x1(1) - x4(1))); 
+%     ((v * x1(1) * x1(2))/(k(1) + x1(2))) - (r * x1(2))/(x1(2) + k(2)) - a * x1(2) + u(1,2)] ...
+%     - ((D(1,2) * x1(1) - x2(1)) + (D(1,3) * x1(1) - x3(1)) + (D(1,4) * x1(1) - x4(1))); 
+% 
+% systemR2 = 
+% [t, x1, x2, x3, x4] = ode45(@(t, x1, x2, x3, x4) systemR1, tspan, IC(1,:));
 
-[t, x1, x2, x3, x4] = ode45(@(t, x1, x2, x3, x4) systemR1, tspan, IC(1,:));
+[t, x] = ode45(@(t, x) [
+    % Region 1
+    - (v * x(1) * x(2)) / (k(1) + x(2)) + a * x(2) + u(1,1) ...
+    - C(1,2)*(x(1) - x(3)) - C(1,3)*(x(1) - x(5)) - C(1,4)*(x(1) - x(7)); 
+    (v * x(1) * x(2)) / (k(1) + x(2)) - (r * x(2)) / (k(2) + x(2)) - a * x(2) + u(1,2) ...
+    - D(1,2)*(x(2) - x(4)) - D(1,3)*(x(2) - x(6)) - D(1,4)*(x(2) - x(8));
+    
+    % Region 2
+    - (v * x(3) * x(4)) / (k(1) + x(4)) + a * x(4) + u(2,1) ...
+    - C(2,1)*(x(3) - x(1)) - C(2,3)*(x(3) - x(5)) - C(2,4)*(x(3) - x(7));
+    (v * x(3) * x(4)) / (k(1) + x(4)) - (r * x(4)) / (k(2) + x(4)) - a * x(4) + u(2,2) ...
+    - D(2,1)*(x(4) - x(2)) - D(2,3)*(x(4) - x(6)) - D(2,4)*(x(4) - x(8));
+    
+    % Region 3
+    - (v * x(5) * x(6)) / (k(1) + x(6)) + a * x(6) + u(3,1) ...
+    - C(3,1)*(x(5) - x(1)) - C(3,2)*(x(5) - x(3)) - C(3,4)*(x(5) - x(7));
+    (v * x(5) * x(6)) / (k(1) + x(6)) - (r * x(6)) / (k(2) + x(6)) - a * x(6) + u(3,2) ...
+    - D(3,1)*(x(6) - x(2)) - D(3,2)*(x(6) - x(4)) - D(3,4)*(x(6) - x(8));
+    
+    % Region 4
+    - (v * x(7) * x(8)) / (k(1) + x(8)) + a * x(8) + u(4,1) ...
+    - C(4,1)*(x(7) - x(1)) - C(4,2)*(x(7) - x(3)) - C(4,3)*(x(7) - x(5));
+    (v * x(7) * x(8)) / (k(1) + x(8)) - (r * x(8)) / (k(2) + x(8)) - a * x(8) + u(4,2) ...
+    - D(4,1)*(x(8) - x(2)) - D(4,2)*(x(8) - x(4)) - D(4,3)*(x(8) - x(6));
+    ], tspan, IC); % finish ODE45 arguments
 
 figure;
 for i = 1:N
-    subplot(N/2, 2, i);
+    subplot(2, 2, i);
     plot(t, x(:, 2*i-1), 'linewidth', 1.5);
     hold on
     plot(t, x(:, 2*i), 'linewidth', 1.5)
