@@ -250,24 +250,24 @@ grid on
 
 %% Part 3: Simulate Networked Model
 v = 0.1; % V1, infection rate (between 0 and 1)
-k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+k = [0.1,0.2].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
 r = 0.9; % recovery rate
 a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 
 N = 4; % Number of regions
-tspan = 0:1:150;
+tspan = 0:1:10;
 
 % all C and D controls must be >0
 
 C = [0 0.2 0.1 0.2;
-     0.3 0 0.4 0.3;
-     0.2 0.1 0 0.2;
-     0.1 0.2 0.6 0;];
+     0.2 0 0.1 0.3;
+     0.1 0.1 0 0.2;
+     0.2 0.3 0.2 0;];
 
-D = [0 0.2 0.1 0.2;
-     0.3 0 0.4 0.3;
-     0.2 0.1 0 0.2;
-     0.1 0.2 0.6 0;];
+D = [0 0.2 0.1 0.1;
+     0.2 0 0.1 0.2;
+     0.1 0.1 0 0.2;
+     0.1 0.2 0.2 0;];
 
 u = [0 0;
      0 0;
@@ -289,7 +289,7 @@ IC = IC(:); % Convert to a vector for compatability with ODE45
 % systemR2 = 
 % [t, x1, x2, x3, x4] = ode45(@(t, x1, x2, x3, x4) systemR1, tspan, IC(1,:));
 
-[t, x] = ode23(@(t, x) [
+[t, x] = ode45(@(t, x) [
     % Region 1
     - (v * x(1) * x(5)) / (k(1) + x(5)) + a * x(5) + u(1,1) ...
     - C(1,2)*(x(1) - x(2)) - C(1,3)*(x(1) - x(3)) - C(1,4)*(x(1) - x(4)); 
@@ -318,9 +318,9 @@ IC = IC(:); % Convert to a vector for compatability with ODE45
 figure;
 for i = 1:N
     subplot(2, 2, i);
-    plot(t, x(:, 2*i-1), 'linewidth', 1.5);
+    plot(t, x(:, i), 'linewidth', 1.5);
     hold on
-    plot(t, x(:, 2*i), 'linewidth', 1.5)
+    plot(t, x(:, 4+i), 'linewidth', 1.5)
     title({sprintf('Region #%.1d', i), ...
            sprintf('u =[%.f,%.f]', u(i,1),u(i,2))});
     legend('Susceptible','Infected');
@@ -401,3 +401,77 @@ sgtitle({'Networked Model Simulation #1', ...
 % end
 %---------------- 
 %[t, x] = ode45(@(t, x) networkedModel(t, x, N, v, k, r, a, u, C, D), tspan, IC1);
+
+
+%%
+
+% Parameters
+v = 0.1; % V1, infection rate
+k = [1e6, 1e6].'; % Saturation constants adjusted
+r = 0.9; % Recovery rate
+a = 0.02; % Rate of loss of immunity
+
+N = 4; % Number of regions
+tspan = 0:1:150;
+
+% Interaction matrices
+C = [0 0.2 0.1 0.2;
+     0.2 0 0.1 0.3;
+     0.1 0.1 0 0.2;
+     0.2 0.3 0.2 0;];
+
+D = [0 0.2 0.1 0.1;
+     0.2 0 0.1 0.2;
+     0.1 0.1 0 0.2;
+     0.1 0.2 0.2 0;];
+
+u = zeros(N,2); % Control inputs
+
+% Initial conditions
+IC = [1e6 1;
+      1e6 3;
+      1e6 5;
+      1e6 1];
+IC = IC(:);
+
+% ODE solver options
+options = odeset('NonNegative', 1:2*N);
+
+% Solve the system
+[t, x] = ode45(@(t, x) networked_model(t, x, N, v, k, r, a, C, D, u), tspan, IC, options);
+
+% Plotting
+figure;
+for i = 1:N
+    subplot(2, 2, i);
+    plot(t, x(:, i), 'b', 'LineWidth', 1.5);
+    hold on;
+    plot(t, x(:, N + i), 'r', 'LineWidth', 1.5);
+    title({sprintf('Region #%d', i), sprintf('u = [%.f, %.f]', u(i,1), u(i,2))});
+    xlabel('Time');
+    ylabel('Population');
+    legend('Susceptible', 'Infected');
+    grid on;
+end
+sgtitle({'Networked Model Simulation #1', ...
+    sprintf('V_{1} = %.1f, K_{1} = %.1e, K_{2} = %.1e, r = %.1f, \\alpha = %.4f', v, k(1), k(2), r, a)},...
+    'FontSize', 12, 'FontWeight', 'bold');
+
+% Networked model function
+function dxdt = networked_model(t, x, N, v, k, r, a, C, D, u)
+    dxdt = zeros(2*N, 1); % Initialize derivative vector
+    xi = x(1:N);          % Susceptible populations
+    yi = x(N+1:2*N);      % Infected populations
+    
+    % Precompute interaction terms
+    interaction_sus = -C * xi + C' * xi;
+    interaction_inf = -D * yi + D' * yi;
+    
+    % Compute derivatives
+    for i = 1:N
+        infection = (v * xi(i) * yi(i)) / (k(1) + yi(i));
+        recovery = (r * yi(i)) / (k(2) + yi(i));
+        dxdt(i) = -infection + a * yi(i) + u(i,1) + interaction_sus(i);
+        dxdt(N + i) = infection - recovery - a * yi(i) + u(i,2) + interaction_inf(i);
+    end
+end
