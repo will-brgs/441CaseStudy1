@@ -9,7 +9,7 @@ clear
 clc
 code = "finished";
 %% Part 1: Model Sim using ODE45
-figure;
+fh1 = figure(1);
 for i =1:4
     if i == 1
     v = 0.1; % V1, infection rate (between 0 and 1)
@@ -42,8 +42,6 @@ system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1);
 
 [t, x] = ode45(system, t, IC);
 
-%fh1 = figure(1)
-
 subplot(2,2,i)
 plot(t, x(:,1), 'linewidth', 1.5);
 hold on;
@@ -61,7 +59,7 @@ end
 % zoom in on oscilations at endemic state
 x = x(75:151,:);
 t = t(75:151);
-figure
+fh2 = figure(2);
 subplot(2,1,1)
 plot(t, x(:,1), 'linewidth', 1.5);
 xlabel('Time (days)');
@@ -80,10 +78,10 @@ title('Infected Individuals')
 sgtitle({'Zero-input Simulation #4 at Endemic State'},'FontSize', 12, 'FontWeight', 'bold')
 grid on
 %% Part 1: Simulate System with Linearized Model
-figure;
+fh3 = figure(3);
 for i =1:4
     if i == 1
-    v = 0.1; % V1, infection rate (between 0 and 1)
+    v = 0.1; % V1, infection rate (between 0 and 1) 
     k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
     r = 0.9; % recovery rate
     a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
@@ -117,7 +115,6 @@ system = @(t, x) J * x;
 
 [t, x] = ode45(system, t, IC);
 
-%fh2 = figure(1)
 subplot(2,2,i)
 plot(t, x(:,1), 'linewidth', 1.5);
 hold on;
@@ -157,7 +154,7 @@ wave(ivStartTime:(ivStartTime + length(sine)-1),1) = sine;
 u = cat(2,wave(:), zeros(length(t),1));
 
 % Plot control input
-figure
+fh4 = figure(4);
 plot(t,u(:,1), 'linewidth', 2.5)
 hold on
 plot(t,u(:,2), 'linewidth', 1.5)
@@ -173,8 +170,7 @@ system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(round(t+1),1)
 
 [t, x1] = ode45(system, t, IC);
 
-% fh1 = figure(1);
-figure
+fh5 = figure(5);
 plot(t, x1(:,1), 'linewidth', 1.5);
 hold on;
 plot(t, x1(:,2), 'linewidth', 1.5);
@@ -221,7 +217,7 @@ system_zombies = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a*x(2);
 [t_zombies, x1_zombies] = ode45(system_zombies, t, IC);
 [t_endemic, x1_endemic] = ode45(system_endemic, t, IC);
 
-figure
+fh6 = figure(6);
 subplot(2, 1, 1)
 hold on;
 plot(t_zombies, x1_zombies(:,1), 'linewidth', 1.5);
@@ -315,7 +311,7 @@ IC = IC(:); % Convert to a vector for compatability with ODE45
     - D(4,1)*(x(8) - x(5)) - D(4,2)*(x(8) - x(6)) - D(4,3)*(x(8) - x(7));
     ], tspan, IC); % finish ODE45 arguments
 
-figure;
+fh7 = figure(7);
 for i = 1:N
     subplot(2, 2, i);
     plot(t, x(:, i), 'linewidth', 1.5);
@@ -334,9 +330,16 @@ sgtitle({'Networked Model Simulation #1', ...
 % -------------------------------------------------------------------
 %% Save images
 % filepath = "C:\Users\Will\OneDrive - Washington University in St. Louis\. Control Systems\Case Study 1\Figure export";
-% exportgraphics(fh1, fullfile(filepath, 'V Distribution.jpg'), 'resolution', 300);
-% exportgraphics(fh2, fullfile(filepath, 'E Magnitude.jpg'), 'resolution', 300);
-% exportgraphics(fh3, fullfile(filepath, 'E Field.jpg'), 'resolution', 300);
+% exportgraphics(fh1, fullfile(filepath, 'part1 different vars.jpg'), 'resolution', 300);
+% exportgraphics(fh2, fullfile(filepath, 'part1 equilibrium zoom in.jpg'), 'resolution', 300);
+% exportgraphics(fh3, fullfile(filepath, 'part1 linearized sim.jpg'), 'resolution', 300);
+% exportgraphics(fh4, fullfile(filepath, 'part2 delayed sine input u.jpg'), 'resolution', 300);
+% exportgraphics(fh5, fullfile(filepath, 'part2 delayed sine sim.jpg'), 'resolution', 300);
+% exportgraphics(fh6, fullfile(filepath, 'part2 zombies sim.jpg'), 'resolution', 300);
+% exportgraphics(fh7, fullfile(filepath, 'part3 networked sim set 1'), 'resolution', 300);
+%exportgraphics(fh8, fullfile(filepath, 'part3 networked sim set 2'), 'resolution', 300);
+%exportgraphics(fh0, fullfile(filepath, 'part3 networked sim set 3'), 'resolution', 300);
+
 
 %% Archive: Old Code That Might be Useful
 % -------------------------------------------------------------------
@@ -444,9 +447,9 @@ options = odeset('NonNegative', 1:2*N);
 figure;
 for i = 1:N
     subplot(2, 2, i);
-    plot(t, x(:, i), 'b', 'LineWidth', 1.5);
+    plot(t, x(:, i), 'LineWidth', 1.5);
     hold on;
-    plot(t, x(:, N + i), 'r', 'LineWidth', 1.5);
+    plot(t, x(:, N + i), 'LineWidth', 1.5);
     title({sprintf('Region #%d', i), sprintf('u = [%.f, %.f]', u(i,1), u(i,2))});
     xlabel('Time');
     ylabel('Population');
