@@ -248,143 +248,142 @@ sgtitle({'Control Input Simulation (Cannibal Zombies)', ...
     },'FontSize', 12, 'FontWeight', 'bold')
 grid on
 
-%% Part 3: Simulate Networked Model
-v = 0.1; % V1, infection rate (between 0 and 1)
-k = [0.1,0.2].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
-r = 0.9; % recovery rate
-a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
-
-N = 4; % Number of regions
-tspan = 0:1:10;
-
-% all C and D controls must be >0
-
-C = [0 0.2 0.1 0.2;
-     0.2 0 0.1 0.3;
-     0.1 0.1 0 0.2;
-     0.2 0.3 0.2 0;];
-
-D = [0 0.2 0.1 0.1;
-     0.2 0 0.1 0.2;
-     0.1 0.1 0 0.2;
-     0.1 0.2 0.2 0;];
-
-u = [0 0;
-     0 0;
-     0 0;
-     0 0;]; % Control inputs, each row is a region
-
-IC = [1e6 1;
-      1e6 3;
-      1e6 5;
-      1e6 1]; % ICs for each region (rows), First col susceptible, second infected
-
-IC = IC(:); % Convert to a vector for compatability with ODE45
-
-% systemR1 = @(t, x1, x2, x3, x4) [-1*((v * x1(1) * x1(2))/(k(1)+x1(2)))+ a * x1(2) + u(1,1) ...
-%     - ((C(1,2) * x1(1) - x2(1)) + (C(1,3) * x1(1) - x3(1)) + (C(1,4) * x1(1) - x4(1))); 
-%     ((v * x1(1) * x1(2))/(k(1) + x1(2))) - (r * x1(2))/(x1(2) + k(2)) - a * x1(2) + u(1,2)] ...
-%     - ((D(1,2) * x1(1) - x2(1)) + (D(1,3) * x1(1) - x3(1)) + (D(1,4) * x1(1) - x4(1))); 
-% 
-% systemR2 = 
-% [t, x1, x2, x3, x4] = ode45(@(t, x1, x2, x3, x4) systemR1, tspan, IC(1,:));
-
-[t, x] = ode45(@(t, x) [
-    % Region 1
-    - (v * x(1) * x(5)) / (k(1) + x(5)) + a * x(5) + u(1,1) ...
-    - C(1,2)*(x(1) - x(2)) - C(1,3)*(x(1) - x(3)) - C(1,4)*(x(1) - x(4)); 
-    (v * x(1) * x(5)) / (k(1) + x(5)) - (r * x(5)) / (k(2) + x(5)) - a * x(5) + u(1,2) ...
-    - D(1,2)*(x(5) - x(6)) - D(1,3)*(x(5) - x(7)) - D(1,4)*(x(5) - x(8));
-    
-    % Region 2
-    - (v * x(2) * x(6)) / (k(1) + x(6)) + a * x(6) + u(2,1) ...
-    - C(2,1)*(x(2) - x(1)) - C(2,3)*(x(2) - x(3)) - C(2,4)*(x(2) - x(4));
-    (v * x(2) * x(6)) / (k(1) + x(6)) - (r * x(6)) / (k(2) + x(6)) - a * x(6) + u(2,2) ...
-    - D(2,1)*(x(6) - x(5)) - D(2,3)*(x(6) - x(7)) - D(2,4)*(x(6) - x(8));
-    
-    % Region 3
-    - (v * x(3) * x(7)) / (k(1) + x(7)) + a * x(7) + u(3,1) ...
-    - C(3,1)*(x(3) - x(1)) - C(3,2)*(x(3) - x(2)) - C(3,4)*(x(3) - x(4));
-    (v * x(3) * x(7)) / (k(1) + x(7)) - (r * x(7)) / (k(2) + x(7)) - a * x(7) + u(3,2) ...
-    - D(3,1)*(x(7) - x(5)) - D(3,2)*(x(7) - x(6)) - D(3,4)*(x(7) - x(8));
-    
-    % Region 4
-    - (v * x(4) * x(8)) / (k(1) + x(8)) + a * x(8) + u(4,1) ...
-    - C(4,1)*(x(4) - x(1)) - C(4,2)*(x(4) - x(2)) - C(4,3)*(x(4) - x(3));
-    (v * x(4) * x(8)) / (k(1) + x(8)) - (r * x(8)) / (k(2) + x(8)) - a * x(8) + u(4,2) ...
-    - D(4,1)*(x(8) - x(5)) - D(4,2)*(x(8) - x(6)) - D(4,3)*(x(8) - x(7));
-    ], tspan, IC); % finish ODE45 arguments
-
-figure;
-for i = 1:N
-    subplot(2, 2, i);
-    plot(t, x(:, i), 'linewidth', 1.5);
-    hold on
-    plot(t, x(:, 4+i), 'linewidth', 1.5)
-    title({sprintf('Region #%.1d', i), ...
-           sprintf('u =[%.f,%.f]', u(i,1),u(i,2))});
-    legend('Susceptible','Infected');
-    grid on
-end
-sgtitle({'Networked Model Simulation #1', ...
-    sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)},...
-    'FontSize', 12, 'FontWeight', 'bold')
-% -------------------------------------------------------------------
-
-%% Part 3: Trying again
+%% Part 3: Networked Model Simulation: No Control Input
 %parameters
 v = 0.1; % V1, infection rate (between 0 and 1)
 k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
 r = 0.9; % recovery rate
 a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 
-C = [0 0.2 0.1 0.2;
-     0.2 0 0.1 0.3;
-     0.1 0.1 0 0.2;
-     0.2 0.3 0.2 0;];
+N = 3; % number of regions
 
-D = [0 0.2 0.1 0.1;
-     0.2 0 0.1 0.2;
-     0.1 0.1 0 0.2;
-     0.1 0.2 0.2 0;];
+C = [0 0.2 0.1;
+     0.2 0 0.1;
+     0.1 0.1 0;]; %Coupling matrix for susceptible
 
-u = [0, 0, 0, 0, 0, 0]; % Control inputs
-IC = [3e5 - 10, 10, 2e5 - 10, 0, 5e5 - 10, 0]; %Initial susceptible, Initial infected 
+D = [0    0.1  0.05;
+     0.1  0    0.05;
+     0.05 0.05 0;]; %Coupling matrix for Infected. Half as likely to travel
+
+u = [0, 0, ...
+     0, 0, ...
+     0, 0]; % Control inputs, formatting helps vizualize regions(row) and sus/inf(col)
+
+IC = [3e5 - 10 , 10,...
+      2e5      , 0, ...
+      5e5      , 0];
+% Initial conditions: formatting helps vizualize regions(row) and sus/inf(col)
 t = 0:1:150;
-
 
 system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1) - C(1,2)*(x(1)-x(3)) - C(1,3)*(x(1)-x(5)); %region 1 susceptible
     ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2) - D(1,2)*(x(2)-x(4)) - D(1,3)*(x(2)-x(6)); %region 1 infected
     -1*((v * x(3) * x(4))/(k(1)+x(4)))+ a * x(4) + u(1) - C(2,1)*(x(3)-x(1)) - C(2,3)*(x(3)-x(5)); %region 2 susceptible
     ((v * x(3) * x(4))/(k(1) + x(4))) - (r * x(4))/(x(4) + k(2)) - a*x(4) + u(2) - D(2,1)*(x(4)-x(2)) - D(2,3)*(x(4)-x(6)); %region 2 infected
     -1*((v * x(5) * x(6))/(k(1)+x(6)))+ a * x(6) + u(1) - C(3,1)*(x(5)-x(1)) - C(3,2)*(x(5)-x(3)); %region 3 susceptible
-    ((v * x(5) * x(6))/(k(1) + x(6))) - (r * x(6))/(x(6) + k(2)) - a*x(6) + u(2) - D(3,1)*(x(6)-x(2)) - D(3,2)*(x(6)-x(4))]; %region 3 infected
+    ((v * x(5) * x(6))/(k(1) + x(6))) - (r * x(6))/(x(6) + k(2)) - a*x(6) + u(2) - D(3,1)*(x(6)-x(2)) - D(3,2)*(x(6)-x(4))];
 
 [t, x] = ode45(system, t, IC);
 
 figure()
-hold on
-grid on
-plot(t, x(:,1), 'linewidth', 1.5);
-plot(t, x(:,2), 'linewidth', 1.5);
-plot(t, x(:,3), 'linewidth', 1.5);
-plot(t, x(:,4), 'linewidth', 1.5);
-plot(t, x(:,5), 'linewidth', 1.5);
-plot(t, x(:,6), 'linewidth', 1.5);
-title({sprintf('Zero-Input Region Interaction Simulation #%.1d',i), ...
-    sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
-    sprintf('u = [%.1d, %.1d]', u(1), u(2))})
-xlabel('Time (days)');
-ylabel('# of Individuals');
-legend('Susceptible - 1','Infected - 1', 'Susceptible - 2', 'Infected - 2', 'Susceptible - 3', 'Infected - 3');
+figure;
+for i = 1:N
+    subplot(N, 1, i);
+    plot(t, x(:, 2*i-1), 'linewidth', 1.5);
+    hold on
+    plot(t, x(:, 2*i), 'linewidth', 1.5)
+    title({sprintf('Region #%.1d', i), ...
+           'No Control Inputs'});
+    legend('Susceptible','Infected');
+    grid on
+end
+sgtitle({'Networked Model Simulation #1', ...
+    sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)},...
+    'FontSize', 12, 'FontWeight', 'bold')
+%% Part 3: Networked Model Simulation: Delayed Sine Input for Region 3
+% Redefine delayed sine wave
+ivMax = -10000;
+ivPeriod = 70; %days the intervention will last
+ivStartTime = 5; % day you want to start control input
 
+% Initialize control input (wave)
+wave = zeros(length(t),1);
+
+% Generate sine wave with given amplitude and period
+sine = ivMax * sin(pi * (1/ivPeriod) * (0:(ivPeriod))); %pi instead of 2pi to get 1 half period
+
+% Insert sine wave at specified start time
+wave(ivStartTime:(ivStartTime + length(sine)-1),1) = sine;
+
+% Control inputs
+wave = cat(2,wave(:), zeros(length(t),1));
+%parameters
+v = 0.1; % V1, infection rate (between 0 and 1)
+k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+r = 0.9; % recovery rate
+a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
+
+N = 3; % number of regions
+
+C = [0 0.2 0.1;
+     0.2 0 0.1;
+     0.1 0.1 0;]; %Coupling matrix for susceptible
+
+D = [0    0.1  0.05;
+     0.1  0    0.05;
+     0.05 0.05 0;]; %Coupling matrix for Infected. Half as likely to travel
+
+noInput = zeros(length(t),1); %Zero pad for time variant input
+u = [noInput,noInput, ...
+     wave   ,noInput, ...
+     noInput,noInput]; % Control inputs, formatting helps vizualize regions(row) and sus/inf(col)
+
+IC = [3e5 - 10 , 10,...
+      2e5      , 0, ...
+      5e5      , 0];
+% Initial conditions: formatting helps vizualize regions(row) and sus/inf(col)
+t = 0:1:150;
+
+system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(round(t+1),1) - C(1,2)*(x(1)-x(3)) - C(1,3)*(x(1)-x(5)); %region 1 susceptible
+    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(round(t+1),2) - D(1,2)*(x(2)-x(4)) - D(1,3)*(x(2)-x(6)); %region 1 infected
+    -1*((v * x(3) * x(4))/(k(1)+x(4)))+ a * x(4) + u(round(t+1),3) - C(2,1)*(x(3)-x(1)) - C(2,3)*(x(3)-x(5)); %region 2 susceptible
+    ((v * x(3) * x(4))/(k(1) + x(4))) - (r * x(4))/(x(4) + k(2)) - a*x(4) + u(round(t+1),4) - D(2,1)*(x(4)-x(2)) - D(2,3)*(x(4)-x(6)); %region 2 infected
+    -1*((v * x(5) * x(6))/(k(1)+x(6)))+ a * x(6) + u(round(t+1),5) - C(3,1)*(x(5)-x(1)) - C(3,2)*(x(5)-x(3)); %region 3 susceptible
+    ((v * x(5) * x(6))/(k(1) + x(6))) - (r * x(6))/(x(6) + k(2)) - a*x(6) + u(round(t+1),6) - D(3,1)*(x(6)-x(2)) - D(3,2)*(x(6)-x(4))]; %region 3 infected
+
+[t, x] = ode45(system, t, IC);
+
+figure
+for i = 1:N
+    subplot(N, 1, i);
+    plot(t, x(:, 2*i-1), 'linewidth', 1.5);
+    hold on
+    plot(t, x(:, 2*i), 'linewidth', 1.5)
+    if i == 2
+    title({sprintf('Region #%.1d', i), ...
+           'Vaccine Program Intervention'});
+    else
+    title({sprintf('Region #%.1d', i), ...
+           'No Control Inputs'});
+    end
+    legend('Susceptible','Infected');
+    grid on
+end
+sgtitle({'Networked Model Simulation #2', ...
+    sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a)},...
+    'FontSize', 12, 'FontWeight', 'bold')
 %% Auxilliary Code : Meant Saving Information and Storing Old Code
 % -------------------------------------------------------------------
 %% Save images
 % filepath = "C:\Users\Will\OneDrive - Washington University in St. Louis\. Control Systems\Case Study 1\Figure export";
-% exportgraphics(fh1, fullfile(filepath, 'V Distribution.jpg'), 'resolution', 300);
-% exportgraphics(fh2, fullfile(filepath, 'E Magnitude.jpg'), 'resolution', 300);
-% exportgraphics(fh3, fullfile(filepath, 'E Field.jpg'), 'resolution', 300);
+% exportgraphics(fh1, fullfile(filepath, 'part1 different vars.jpg'), 'resolution', 300);
+% exportgraphics(fh2, fullfile(filepath, 'part1 equilibrium zoom in.jpg'), 'resolution', 300);
+% exportgraphics(fh3, fullfile(filepath, 'part1 linearized sim.jpg'), 'resolution', 300);
+% exportgraphics(fh4, fullfile(filepath, 'part2 delayed sine input u.jpg'), 'resolution', 300);
+% exportgraphics(fh5, fullfile(filepath, 'part2 delayed sine sim.jpg'), 'resolution', 300);
+% exportgraphics(fh6, fullfile(filepath, 'part2 zombies sim.jpg'), 'resolution', 300);
+% exportgraphics(fh7, fullfile(filepath, 'part3 networked sim set 1'), 'resolution', 300);
+% exportgraphics(fh8, fullfile(filepath, 'part3 networked sim set 2'), 'resolution', 300);
+% exportgraphics(fh0, fullfile(filepath, 'part3 networked sim set 3'), 'resolution', 300);
 
 %% Archive: Old Code That Might be Useful
 % -------------------------------------------------------------------
