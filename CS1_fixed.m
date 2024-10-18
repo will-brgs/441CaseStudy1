@@ -128,57 +128,40 @@ ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
 end
-%% Part 1: Simulate System with Linearized Model Above Xeq
-for i =1:4
-    if i == 1
-    v = 0.1; % V1, infection rate (between 0 and 1)
-    k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
-    r = 0.9; % recovery rate
-    a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
-    elseif i == 2
-    v = 0.2;
-    k = [10000, 2000];
-    r = 0.01;
-    a = 0.12;
-    elseif i == 3
-    v = 0.2;
-    k = [10000, 2000];
-    r = 0.9;
-    a = 0.03;
-    elseif i == 4
-    v = 0.2;
-    k = [20000, 100];
-    r = 0.9;
-    a = 0.1;
-    end
-
-t = 0:1:150;
+%% Part 1: Simulate System with Linearized Model at Xeq
+figure;
+for i =1:2
+   v = 0.1; % V1, infection rate (between 0 and 1)
+   k = [100,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+   r = 0.9; % recovery rate
+   a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
+t = 0:1:150000;
 u = [0,0];
-IC = [1e6 - 10,10]; %Initial susceptible, Initial infected 
-
-xeq =  [(r/k(2) + a)*(k(1)/v) + 1e4,0]; 
-
-J = [0, (-1 * v * xeq(1))/k(1) + a; 
-     0 , (v * xeq(1))/k(1) - r/k(2) - a];
-
+IC = [1e6 - 10,10]; %Initial susceptible, Initial infected
+if i==1
+   xeq =  [(r/k(2) + a)*(k(1)/v)+1,0]; % +1 will case the system to be unstable
+else
+   xeq =  [(r/k(2) + a)*(k(1)/v)-1,0]; % -1 will case the system to be stable
+end
+J = [0, ((-1 * v * xeq(1))/k(1)) + a;
+    0 , ((v * xeq(1))/k(1)) - r/k(2) - a];
 system = @(t, x) J * x;
-
 [t, x] = ode45(system, t, IC);
-
-fh4 = figure(4);
-subplot(2,2,i)
+%fh2 = figure(1)
+subplot(2,1,i)
 plot(t, x(:,1), 'linewidth', 1.5);
 hold on;
 plot(t, x(:,2), 'linewidth', 1.5);
 %plot(t, immune, 'linewidth', 1.5);
-title({'Linearized Simulation #2', ...
-    sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
-    sprintf('u = [%.1d, %.1d]', u(1), u(2))})
+title({'Linearized Simulation #1', ...
+   sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
+   sprintf('u = [%.1d, %.1d]', u(1), u(2))})
 xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
 end
+
 %% Part 2: Implement Control Input
 v = 0.1; % V1, infection rate (between 0 and 1)
 k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
