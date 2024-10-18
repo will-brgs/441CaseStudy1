@@ -338,35 +338,27 @@ k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAIN
 r = 0.9; % recovery rate
 a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
 
-c12 = 0.1; %region 2 susceptible effect on region 1
-c13 = 0.1; %region 3 susceptible effect on region 1
+C = [0 0.2 0.1 0.2;
+     0.2 0 0.1 0.3;
+     0.1 0.1 0 0.2;
+     0.2 0.3 0.2 0;];
 
-c21 = 0.1; %region 1 susceptible effect on region 2
-c23 = 0.1; %region 3 susceptible effect on region 2
-
-c31 = 0.1; %region 1 susceptible effect on region 3
-c32 = 0.1; %region 2 susceptible effect on region 3
-
-d12 = 0.1; %region 2 infected effect on region 1
-d13 = 0.1; %region 3 infected effect on region 1
-
-d21 = 0.1; %region 1 infected effect on region 2
-d23 = 0.1; %region 3 infected effect on region 2
-
-d31 = 0.1; %region 1 infected effect on region 3
-d32 = 0.1; %region 2 infected effect on region 3
-
+D = [0 0.2 0.1 0.1;
+     0.2 0 0.1 0.2;
+     0.1 0.1 0 0.2;
+     0.1 0.2 0.2 0;];
 
 u = [0, 0, 0, 0, 0, 0]; % Control inputs
-IC = [1e5 - 10, 10, 1e4 - 10, 10, 1e6 - 10, 10]; %Initial susceptible, Initial infected 
+IC = [3e5 - 10, 10, 2e5 - 10, 0, 5e5 - 10, 0]; %Initial susceptible, Initial infected 
 t = 0:1:150;
 
-system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1) - c12*(x(1)-x(3)) - c13*(x(1)-x(5)); %region 1 susceptible
-    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2) - d12*(x(2)-x(4)) - d13*(x(2)-x(6)); %region 1 infected
-    -1*((v * x(3) * x(4))/(k(1)+x(4)))+ a * x(4) + u(1) - c21*(x(3)-x(1)) - c23*(x(3)-x(5)); %region 2 susceptible
-    ((v * x(3) * x(4))/(k(1) + x(4))) - (r * x(4))/(x(4) + k(2)) - a*x(4) + u(2) - d21*(x(4)-x(2)) - d23*(x(4)-x(6)); %region 2 infected
-    -1*((v * x(5) * x(6))/(k(1)+x(6)))+ a * x(6) + u(1) - c31*(x(5)-x(1)) - c32*(x(5)-x(3)); %region 3 susceptible
-    ((v * x(5) * x(6))/(k(1) + x(6))) - (r * x(6))/(x(6) + k(2)) - a*x(6) + u(2) - d31*(x(6)-x(2)) - d32*(x(6)-x(4))]; %region 3 infected
+
+system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1) - C(1,2)*(x(1)-x(3)) - C(1,3)*(x(1)-x(5)); %region 1 susceptible
+    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) + u(2) - D(1,2)*(x(2)-x(4)) - D(1,3)*(x(2)-x(6)); %region 1 infected
+    -1*((v * x(3) * x(4))/(k(1)+x(4)))+ a * x(4) + u(1) - C(2,1)*(x(3)-x(1)) - C(2,3)*(x(3)-x(5)); %region 2 susceptible
+    ((v * x(3) * x(4))/(k(1) + x(4))) - (r * x(4))/(x(4) + k(2)) - a*x(4) + u(2) - D(2,1)*(x(4)-x(2)) - D(2,3)*(x(4)-x(6)); %region 2 infected
+    -1*((v * x(5) * x(6))/(k(1)+x(6)))+ a * x(6) + u(1) - C(3,1)*(x(5)-x(1)) - C(3,2)*(x(5)-x(3)); %region 3 susceptible
+    ((v * x(5) * x(6))/(k(1) + x(6))) - (r * x(6))/(x(6) + k(2)) - a*x(6) + u(2) - D(3,1)*(x(6)-x(2)) - D(3,2)*(x(6)-x(4))]; %region 3 infected
 
 [t, x] = ode45(system, t, IC);
 
@@ -379,7 +371,6 @@ plot(t, x(:,3), 'linewidth', 1.5);
 plot(t, x(:,4), 'linewidth', 1.5);
 plot(t, x(:,5), 'linewidth', 1.5);
 plot(t, x(:,6), 'linewidth', 1.5);
-%plot(t, immune, 'linewidth', 1.5);
 title({sprintf('Zero-Input Region Interaction Simulation #%.1d',i), ...
     sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
     sprintf('u = [%.1d, %.1d]', u(1), u(2))})
