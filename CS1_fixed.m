@@ -8,14 +8,19 @@ close all
 clear
 clc
 code = "finished";
+%% General Notes
+% Various pieces of code are repreated for different sections. This is done
+% to allow flexibility for sections to be run independently. Overall code
+% length will be shortened by removing these, but it will harm the ability
+% to perform the different analysis techniques and strategiges used in this
+% case study.
 %% Part 1: Model Sim using ODE45
-fh1 = figure(1);
 for i =1:4
     if i == 1
-    v = 0.1; % V1, infection rate (between 0 and 1)
-    k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+    v = 0.1; % V1, infection rate
+    k = [100000,20000].';% Sat constant for: infection, recovery
     r = 0.9; % recovery rate
-    a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
+    a = 0.02; % Rate of reinfection/loss of immunity
     elseif i == 2
     v = 0.2;
     k = [10000, 2000];
@@ -42,11 +47,12 @@ system = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a * x(2) + u(1);
 
 [t, x] = ode45(system, t, IC);
 
+% Plot general system response
+fh1 = figure(1);
 subplot(2,2,i)
 plot(t, x(:,1), 'linewidth', 1.5);
 hold on;
 plot(t, x(:,2), 'linewidth', 1.5);
-%plot(t, immune, 'linewidth', 1.5);
 title({sprintf('Zero-Input Simulation #%.1d',i), ...
     sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
     sprintf('u = [%.1d, %.1d]', u(1), u(2))})
@@ -56,7 +62,7 @@ legend('Susceptible','Infected');
 grid on
 end
 
-% zoom in on oscilations at endemic state
+%Zoom in on oscilations at endemic state
 x = x(75:151,:);
 t = t(75:151);
 fh2 = figure(2);
@@ -78,81 +84,32 @@ title('Infected Individuals')
 sgtitle({'Zero-input Simulation #4 at Endemic State'},'FontSize', 12, 'FontWeight', 'bold')
 grid on
 %% Part 1: Simulate System with Linearized Model at Xeq
-for i =1:4
-    if i == 1
-    v = 0.1; % V1, infection rate (between 0 and 1)
-    k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
-    r = 0.9; % recovery rate
-    a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
-    elseif i == 2
-    v = 0.2;
-    k = [10000, 2000];
-    r = 0.01;
-    a = 0.12;
-    elseif i == 3
-    v = 0.2;
-    k = [10000, 2000];
-    r = 0.9;
-    a = 0.03;
-    elseif i == 4
-    v = 0.2;
-    k = [20000, 100];
-    r = 0.9;
-    a = 0.1;
-    end
-
-t = 0:1:150;
-u = [0,0];
-IC = [1e6 - 10,10]; %Initial susceptible, Initial infected 
-
-xeq =  [(r/k(2) + a)*(k(1)/v),0]; 
-
-J = [0, (-1 * v * xeq(1))/k(1) + a; 
-     0 , (v * xeq(1))/k(1) - r/k(2) - a];
-
-system = @(t, x) J * x;
-
-[t, x] = ode45(system, t, IC);
-
-fh3 = figure(3);
-subplot(2,2,i)
-plot(t, x(:,1), 'linewidth', 1.5);
-hold on;
-plot(t, x(:,2), 'linewidth', 1.5);
-%plot(t, immune, 'linewidth', 1.5);
-title({'Linearized Simulation #1', ...
-    sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
-    sprintf('u = [%.1d, %.1d]', u(1), u(2))})
-xlabel('Time (days)');
-ylabel('# of Individuals');
-legend('Susceptible','Infected');
-grid on
-end
-%% Part 1: Simulate System with Linearized Model at Xeq
-figure;
 for i =1:2
-   v = 0.1; % V1, infection rate (between 0 and 1)
-   k = [100,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+   v = 0.1; % V1, infection rate
+   k = [100,20000].';% Sat constant for: infection, recovery
    r = 0.9; % recovery rate
-   a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
+   a = 0.02; % Rate of reinfection/loss of immunity
 t = 0:1:150000;
-u = [0,0];
+u = [0,0]; % control input
 IC = [1e6 - 10,10]; %Initial susceptible, Initial infected
 if i==1
    xeq =  [(r/k(2) + a)*(k(1)/v)+1,0]; % +1 will case the system to be unstable
 else
    xeq =  [(r/k(2) + a)*(k(1)/v)-1,0]; % -1 will case the system to be stable
 end
+
 J = [0, ((-1 * v * xeq(1))/k(1)) + a;
-    0 , ((v * xeq(1))/k(1)) - r/k(2) - a];
+    0 , ((v * xeq(1))/k(1)) - r/k(2) - a]; %Derrived jacobian matrix
+
 system = @(t, x) J * x;
+
 [t, x] = ode45(system, t, IC);
-%fh2 = figure(1)
+
+fh3 = figure(3);
 subplot(2,1,i)
 plot(t, x(:,1), 'linewidth', 1.5);
 hold on;
 plot(t, x(:,2), 'linewidth', 1.5);
-%plot(t, immune, 'linewidth', 1.5);
 title({'Linearized Simulation #1', ...
    sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
    sprintf('u = [%.1d, %.1d]', u(1), u(2))})
@@ -161,31 +118,24 @@ ylabel('# of Individuals');
 legend('Susceptible','Infected');
 grid on
 end
-
 %% Part 2: Implement Control Input
-v = 0.1; % V1, infection rate (between 0 and 1)
-k = [100000,20000].';% Sat constant for: infection, recovery IMPORTANT CONSTRAINT
+v = 0.1; % V1, infection rate
+k = [100000,20000].';% Sat constant for: infection, recovery
 r = 0.9; % recovery rate
-a = 0.02; % Rate of reinfection/loss of immunity (hundreds place)
+a = 0.02; % Rate of reinfection/loss of immunity
 
 IC = [1e6 - 10,10]; %Initial susceptible, Initial infected 
 t = 0:1:150;
 
-ivMax = -10000;
+ivMax = -10000; %maximum peoeple treated per day in sine wave
 ivPeriod = 70; %days the intervention will last
 ivStartTime = 20; % day you want to start control input
 
-% Initialize control input (wave)
-wave = zeros(length(t),1);
-
-% Generate sine wave with given amplitude and period
+wave = zeros(length(t),1); % zero padding
 sine = ivMax * sin(pi * (1/ivPeriod) * (0:(ivPeriod))); %pi instead of 2pi to get 1 half period
+wave(ivStartTime:(ivStartTime + length(sine)-1),1) = sine; % Insert sine wave at specified start time
 
-% Insert sine wave at specified start time
-wave(ivStartTime:(ivStartTime + length(sine)-1),1) = sine;
-
-% Control inputs
-u = cat(2,wave(:), zeros(length(t),1));
+u = cat(2,wave(:), zeros(length(t),1)); % Finalized control inputs
 
 % Plot control input
 fh5 = figure(5);
@@ -226,42 +176,24 @@ beta = 0.15;
 IC = [1e6 - 10,10]; %Initial susceptible, Initial infected 
 t = 0:1:150;
 
-%These control inputs can control at what population an endemic state is
-%reached by changing beta
-sysEndemic = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a*x(2) + beta*x(2); 
-    ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) - beta*x(2)];
-
 %Modeling cannibal zombies will drive disease to eradication
 sysZombies = @(t, x) [-1*((v * x(1) * x(2))/(k(1)+x(2)))+ a*x(2); 
     ((v * x(1) * x(2))/(k(1) + x(2))) - (r * x(2))/(x(2) + k(2)) - a*x(2) - beta*x(2)];
 
-[tZombies, xZombies] = ode45(sysZombies, t, IC);
-[tEndemic, xEndemic] = ode45(sysEndemic, t, IC);
+[t, xZombies] = ode45(sysZombies, t, IC);
 
 fh7 = figure(7);
-subplot(2, 1, 1)
-hold on;
-plot(tZombies, xZombies(:,1), 'linewidth', 1.5);
-plot(tZombies, xZombies(:,2), 'linewidth', 1.5);
+plot(t, xZombies(:,1), 'linewidth', 1.5);
+hold on
+plot(t, xZombies(:,2), 'linewidth', 1.5);
 xlabel('Time (days)');
 ylabel('# of Individuals');
 legend('Susceptible','Infected');
 title(sprintf('Cannibal Zombies: u = [%.1f * x_{2}(t), - %.1f * x_{2}(t)]', beta, beta))
-hold off;
 grid on
-
-subplot(2, 1, 2)
-hold on;
-plot(tEndemic, xEndemic(:,1), 'linewidth', 1.5);
-plot(tEndemic, xEndemic(:,2), 'linewidth', 1.5);
-xlabel('Time (days)');
-ylabel('# of Individuals');
-legend('Susceptible','Infected');
-title(sprintf('Endemic Control: u = [%.1d, -%.1f * x_{2}(t)]', 0, beta))
-
-sgtitle({'Control Input Simulation (Cannibal Zombies)', ...
+title({'Control Input Simulation (Cannibal Zombies)', ...
     sprintf('V_{1} =%.1f, K_{1} =%.1d, K_{2} =%.1d, r =%.1f, \\alpha =%.4f', v, k(1), k(2), r, a), ...
-    %sprintf('u = [%.1f, %.1f]', u(1), u(2)), ...
+    sprintf('Cannibal Zombies: u = [%.1f * x_{2}(t), - %.1f * x_{2}(t)]', beta, beta)
     },'FontSize', 12, 'FontWeight', 'bold')
 grid on
 
@@ -321,14 +253,9 @@ ivMax = -10000;
 ivPeriod = 70; %days the intervention will last
 ivStartTime = 5; % day you want to start control input
 
-% Initialize control input (wave)
-wave = zeros(length(t),1);
-
-% Generate sine wave with given amplitude and period
+wave = zeros(length(t),1); % zero padding
 sine = ivMax * sin(pi * (1/ivPeriod) * (0:(ivPeriod))); %pi instead of 2pi to get 1 half period
-
-% Insert sine wave at specified start time
-wave(ivStartTime:(ivStartTime + length(sine)-1),1) = sine;
+wave(ivStartTime:(ivStartTime + length(sine)-1),1) = sine; % Insert sine wave at specified start time
 
 % Control inputs
 wave = cat(2,wave(:), zeros(length(t),1));
@@ -392,7 +319,7 @@ sgtitle({'Networked Model Simulation #2', ...
 % exportgraphics(fh1, fullfile(filepath, 'part1 different vars.jpg'), 'resolution', 300);
 % exportgraphics(fh2, fullfile(filepath, 'part1 equilibrium zoom in.jpg'), 'resolution', 300);
 % exportgraphics(fh3, fullfile(filepath, 'part1 linearized sim 1.jpg'), 'resolution', 300);
-% exportgraphics(fh4, fullfile(filepath, 'part1 linearized sim 2.jpg'), 'resolution', 300);
+% fh4 no longer exists
 % exportgraphics(fh5, fullfile(filepath, 'part2 delayed sine input u.jpg'), 'resolution', 300);
 % exportgraphics(fh6, fullfile(filepath, 'part2 delayed sine sim.jpg'), 'resolution', 300);
 % exportgraphics(fh7, fullfile(filepath, 'part2 zombies sim.jpg'), 'resolution', 300);
